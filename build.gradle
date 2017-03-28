@@ -17,7 +17,6 @@ mainClassName = 'io.vertx.core.Launcher'
 
 def vertxVersion = '3.4.1'
 def resteasyVertxVersion = '3.1.1.Final'
-def lombokVersion = '1.16.16'
 def junitVersion = '4.12'
 def mainVerticleName = 'social.cut.MainVerticle'
 def watchForChange = 'src/**/*'
@@ -29,7 +28,6 @@ dependencies {
   compile "io.vertx:vertx-web:$vertxVersion"
   compile "io.vertx:vertx-mongo-client:$vertxVersion"
   compile "org.jboss.resteasy:resteasy-vertx:$resteasyVertxVersion"
-  compile "org.projectlombok:lombok:$lombokVersion"
   testCompile "junit:junit:$junitVersion"
   testCompile "io.vertx:vertx-unit:$vertxVersion"
 }
