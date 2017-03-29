@@ -10,21 +10,14 @@
 
 package social.cut.cms;
 
-import io.vertx.core.json.JsonObject;
 import social.cut.common.Service;
 
 public class CMSService extends Service {
-    
-  public static final String ACTION_GET = "get";
-  public static final String ACTION_ALL = "all";
-  public static final String ACTION_DELETE = "delete";
-  public static final String ACTION_UPDATE = "update";
-  public static final String ACTION_CREATE = "create";
-
-  public CMSService() {
-    this.setName("CMS");
-  }
   
+  public CMSService() {
+  }
+
+  /*
   @Override
   public void start() throws Exception {
     vertx.eventBus().<JsonObject>consumer(
@@ -33,4 +26,5 @@ public class CMSService extends Service {
           JsonObject json = msg.body();
         });
   }
+  */
 }

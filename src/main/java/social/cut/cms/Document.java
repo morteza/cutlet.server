@@ -20,6 +20,66 @@ import social.cut.common.Model;
 public class Document extends Model {
   public String path;
   String title;
+  /**
+   * @return the path
+   */
+  public String getPath() {
+    return path;
+  }
+  /**
+   * @param path the path to set
+   */
+  public void setPath(String path) {
+    this.path = path;
+  }
+  /**
+   * @return the title
+   */
+  public String getTitle() {
+    return title;
+  }
+  /**
+   * @param title the title to set
+   */
+  public void setTitle(String title) {
+    this.title = title;
+  }
+  /**
+   * @return the content
+   */
+  public String getContent() {
+    return content;
+  }
+  /**
+   * @param content the content to set
+   */
+  public void setContent(String content) {
+    this.content = content;
+  }
+  /**
+   * @return the template
+   */
+  public String getTemplate() {
+    return template;
+  }
+  /**
+   * @param template the template to set
+   */
+  public void setTemplate(String template) {
+    this.template = template;
+  }
+  /**
+   * @return the createdAt
+   */
+  public Date getCreatedAt() {
+    return createdAt;
+  }
+  /**
+   * @param createdAt the createdAt to set
+   */
+  public void setCreatedAt(Date createdAt) {
+    this.createdAt = createdAt;
+  }
   String content;
   String template;
   Date createdAt;
