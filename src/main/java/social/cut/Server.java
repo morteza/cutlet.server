@@ -1,38 +1,60 @@
 package social.cut;
 
-import org.jboss.resteasy.plugins.server.vertx.VertxRequestHandler;
-import org.jboss.resteasy.plugins.server.vertx.VertxResteasyDeployment;
-
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.mongo.MongoClient;
+import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import social.cut.cms.CMSController;
+import social.cut.inbox.InboxController;
+import social.cut.utils.ShareableRouter;
 
 public class Server extends AbstractVerticle {
 
   private final Logger logger = LoggerFactory.getLogger(Server.class);
-  private MongoClient mongo;
-  
+  private Router router;
+
   @Override
   public void start() {
-    
-    VertxResteasyDeployment deployment = new VertxResteasyDeployment();
-    deployment.start();
-    deployment.getRegistry().addPerInstanceResource(CMSController.class);
-    
-    mongo = MongoClient.createShared(vertx, config());
-    
-    Router router = Router.router(vertx);
-    router.route().handler(StaticHandler.create());
 
-    vertx.createHttpServer()
-        .requestHandler(new VertxRequestHandler(vertx, deployment)).listen(8080, res -> {
-          logger.info("Server started on port " + res.result().actualPort());
-        });
+    router = Router.router(vertx);
 
+    addCorsHandler(router);
+    addStaticHandler(router);
+
+    //FIXME this is a workaround to share a single router among all controllers.
+    ShareableRouter sr = new ShareableRouter(router);
+    LocalMap<String, ShareableRouter> routers = vertx.sharedData().getLocalMap("routers");
+    routers.put("main", sr);
+    
+    vertx.deployVerticle(CMSController.class.getName());
+    vertx.deployVerticle(InboxController.class.getName());
+
+    //TODO read port from config file.
+    vertx.createHttpServer().requestHandler(sr.getRouter()::accept)
+      .listen(8080, res -> {
+        if (res.succeeded())
+          logger.info("Server started...");
+        else
+          logger.error("Server failed to start...");
+      });
+  }
+
+  private Router addCorsHandler(Router router) {
+    router.route().handler(CorsHandler.create("*")
+        .allowedMethod(HttpMethod.GET)
+        .allowedMethod(HttpMethod.POST)
+        .allowedMethod(HttpMethod.OPTIONS)
+        .allowedHeader("Content-Type"));
+    return router;
+  }
+
+  private Router addStaticHandler(Router router) {
+    router.route("/assets/*").handler(StaticHandler.create());
+    return router;
   }
 
 }

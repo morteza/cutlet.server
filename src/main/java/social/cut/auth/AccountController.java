@@ -8,8 +8,10 @@
  *   Copyright: See the file "LICENSE" for the full license governing this code.
  *******************************************************************************/
 
-package social.cut.controllers;
+package social.cut.auth;
 
-public class Accounts {
+import social.cut.common.Controller;
+
+public class AccountController extends Controller {
 
 }
