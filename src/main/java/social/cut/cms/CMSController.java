@@ -15,7 +15,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
-import io.vertx.core.Vertx;
+import io.vertx.core.Future;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -30,10 +31,13 @@ public class CMSController extends Controller {
   
   private final Logger logger = LoggerFactory.getLogger(CMSController.class);
 
-  public CMSController() {
-    JsonObject config = Vertx.currentContext().config();
-    mongo = MongoClient.createShared(Vertx.currentContext().owner(), config);
-    logger.debug("MongoClient initiated.");
+  @Override
+  public void start(Future<Void> future) {
+    super.start(future);
+    JsonObject dbConfig = config().getJsonObject("mongo");
+    logger.info("DB: " + dbConfig.getString("db_name"));
+    mongo = MongoClient.createShared(vertx, dbConfig);
+    //future.complete();
   }
   
   @GET
@@ -70,8 +74,16 @@ public class CMSController extends Controller {
   @POST
   @Path("/")
   public void create(RoutingContext ctx) {
-    Document document = new Document();//TODO read from ctx.request()
-    document.setTitle("Testing...");
+    Document document = Json.decodeValue(ctx.getBodyAsString(), Document.class);
+    JsonObject json = new JsonObject(Json.encode(document));
+    json.remove("_id");
+    mongo.save("social.cut.cms", json, res -> {
+      if (res.succeeded()) {
+        logger.info("Result: " + res.result());
+      } else {
+        logger.error("Error: " + res.cause());
+      };
+    });
     logger.info("Document: " + document.title);
     ctx.response().end("create...");
   }

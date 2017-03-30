@@ -20,7 +20,8 @@ def resteasyVersion = '3.1.1.Final'
 def junitVersion = '4.12'
 def mainVerticleName = 'social.cut.Server'
 def watchForChange = 'src/**/*'
-def doOnChange = './gradlew classes'
+def configFile = 'src/main/resources/config.dev.json'
+def doOnChange = 'gradle classes'
 
 dependencies {
   compile "io.vertx:vertx-core:$vertxVersion"
@@ -44,7 +45,11 @@ shadowJar {
 }
 
 run {
-  args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
+  args = ['run', mainVerticleName,
+    "--redeploy=$watchForChange",
+    "--launcher-class=$mainClassName",
+    "--on-redeploy=$doOnChange",
+    "--conf=$configFile"]
 }
 
 task wrapper(type: Wrapper) {

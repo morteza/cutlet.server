@@ -16,11 +16,14 @@ import java.util.Map;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Model {
 
   protected ObjectId _id;
+  
   public Date createdAt;
   public Date modifiedAt;
 
