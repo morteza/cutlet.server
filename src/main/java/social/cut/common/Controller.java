@@ -16,72 +16,84 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import social.cut.utils.ShareableRouter;
-import social.cut.utils.annotations.DELETE;
-import social.cut.utils.annotations.GET;
-import social.cut.utils.annotations.POST;
-import social.cut.utils.annotations.PUT;
 
 public class Controller extends AbstractVerticle {
-  protected Router router = null;
   protected ShareableRouter sharedRouter = null;
   
-  public void start(Future<Void> startFuture) {
-    addRoutes();
-  }
+  public final Logger logger = LoggerFactory.getLogger(Controller.class);
   
-  public void addRoutes() {
-    router = Router.router(vertx);
-    
+  @Override
+  public void start(Future<Void> startFuture) {
     //FIXME this is just  a workaround to store all routes in a single router.
     LocalMap<String, ShareableRouter> routers = vertx.sharedData().getLocalMap("routers");
-    sharedRouter = routers.get("main");
-
+    ShareableRouter sharedRouter = routers.get("main");
+    addRoutes(sharedRouter.getRouter());
+    routers.put("main", sharedRouter);
+  }
+  
+  private void addRoutes(Router router) {
+    Router apiRouter = Router.router(vertx);
+    
     try {
       Class<? extends Controller> clazz = this.getClass();
       Method[] methods = clazz.getMethods();
 
+      String classPath = ((Path)clazz.getAnnotation(Path.class)).value();
+      logger.info("ClazzPath: " + classPath);
+
       for (Method method : methods) {
         Annotation[] annotations = method.getAnnotations();
 
+        String methodPath = "/"; //Deafult path for the method
+        
+        Path pathAnnot = (Path)method.getAnnotation(Path.class);
+        if (pathAnnot!=null) {
+          methodPath = pathAnnot.value();
+        }
+        
+        //TODO use factory method to process annotations
         for (Annotation annotation : annotations) {
           if (annotation instanceof GET) {
-            GET get = (GET) annotation;
             Handler<RoutingContext> handler = createRoutingHandler(method);
-            router.get(get.value()).handler(handler);
+            apiRouter.get(methodPath).handler(handler);
           } else if (annotation instanceof POST) {
-            POST post = (POST) annotation;
-            router.post(post.value()).handler(BodyHandler.create());
             Handler<RoutingContext> handler = createRoutingHandler(method);
-            router.post(post.value()).handler(handler);
+            apiRouter.post(methodPath).handler(BodyHandler.create());
+            apiRouter.post(methodPath).handler(handler);
           } else if (annotation instanceof PUT) {
-            PUT put = (PUT) annotation;
-            router.put(put.value()).handler(BodyHandler.create());
             Handler<RoutingContext> handler = createRoutingHandler(method);
-            router.put(put.value()).handler(handler);
+            apiRouter.put(methodPath).handler(BodyHandler.create());
+            apiRouter.put(methodPath).handler(handler);
           } else if (annotation instanceof DELETE) {
-            DELETE delete = (DELETE) annotation;
             Handler<RoutingContext> handler = createRoutingHandler(method);
-            router.delete(delete.value()).handler(handler);
+            apiRouter.delete(methodPath).handler(handler);
           }
-
         }
         
       }
-
-      Path path = (Path) clazz.getAnnotation(Path.class);
-      sharedRouter.getRouter().mountSubRouter(path.value(), router);
+      router.mountSubRouter(classPath, apiRouter);
 
     } catch (Throwable t) {
+      t.printStackTrace();
     }
 
   }
@@ -95,4 +107,5 @@ public class Controller extends AbstractVerticle {
         MethodType.methodType(void.class, RoutingContext.class))
     .getTarget().invoke(this);
   }
+  
 }

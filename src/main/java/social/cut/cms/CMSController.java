@@ -10,6 +10,9 @@
 
 package social.cut.cms;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 import io.vertx.core.Vertx;
@@ -19,9 +22,6 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.RoutingContext;
 import social.cut.common.Controller;
-import social.cut.utils.annotations.GET;
-import social.cut.utils.annotations.POST;
-import social.cut.utils.annotations.PUT;
 
 @Path("/api/v1/cms")
 public class CMSController extends Controller {
@@ -36,7 +36,8 @@ public class CMSController extends Controller {
     logger.debug("MongoClient initiated.");
   }
   
-  @GET("/")
+  @GET
+  @Path("/")
   public void getAll(RoutingContext ctx) {
     JsonObject query = new JsonObject();
     
@@ -46,7 +47,8 @@ public class CMSController extends Controller {
     });
   }
   
-  @GET("/:id")
+  @GET
+  @Path("/:id")
   public void get(RoutingContext ctx) {
     String _id = ctx.request().getParam("id");
     JsonObject query = new JsonObject().put("_id", _id);
@@ -56,7 +58,8 @@ public class CMSController extends Controller {
     });
   }
   
-  @PUT("/:id")
+  @PUT
+  @Path("/:id")
   public void update(RoutingContext ctx) {
     Document document = new Document();//TODO read from ctx.request()
     document.setTitle("Testing...");
@@ -64,7 +67,8 @@ public class CMSController extends Controller {
     ctx.response().end("update...");
   }
   
-  @POST("/")
+  @POST
+  @Path("/")
   public void create(RoutingContext ctx) {
     Document document = new Document();//TODO read from ctx.request()
     document.setTitle("Testing...");

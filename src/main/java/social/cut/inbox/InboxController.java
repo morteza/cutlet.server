@@ -10,16 +10,17 @@
 
 package social.cut.inbox;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 import io.vertx.ext.web.RoutingContext;
 import social.cut.common.Controller;
-import social.cut.utils.annotations.GET;
 
 @Path("/api/inbox")
 public class InboxController extends Controller {
 
-  @GET("/test")
+  @GET
+  @Path("/test")
   public void test(RoutingContext ctx) {
     ctx.response().end("Thank you!");
   }
