@@ -10,6 +10,11 @@
 
 package social.cut.cms;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -17,6 +22,7 @@ import javax.ws.rs.Path;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -27,17 +33,20 @@ import social.cut.common.Controller;
 @Path("/api/v1/cms")
 public class CMSController extends Controller {
 
-  private MongoClient mongo;
+  //TODO Move this to service
+  protected MongoClient mongo;
+  private final String COLLECTION = "social.cut.cms";
   
-  private final Logger logger = LoggerFactory.getLogger(CMSController.class);
+  private final Logger LOG = LoggerFactory.getLogger(CMSController.class);
 
   @Override
   public void start(Future<Void> future) {
     super.start(future);
+    
     JsonObject dbConfig = config().getJsonObject("mongo");
-    logger.info("DB: " + dbConfig.getString("db_name"));
     mongo = MongoClient.createShared(vertx, dbConfig);
     //future.complete();
+    LOG.info("MongoDB client initiated");
   }
   
   @GET
@@ -45,30 +54,60 @@ public class CMSController extends Controller {
   public void getAll(RoutingContext ctx) {
     JsonObject query = new JsonObject();
     
-    mongo.find("social.cut.cms", query, res -> {
-      logger.info("Mongo.find(): " + res.result());
-      ctx.response().end("getAll...");
+    mongo.find(COLLECTION, query, res -> {
+      if(res.succeeded()) {
+        
+        List<Document> documents = 
+            res.result().stream()
+              .map(m -> Json.mapper.convertValue(m, Document.class))
+              .collect(Collectors.toCollection(ArrayList::new));
+        
+        ctx.response().end(new JsonArray(documents).encodePrettily());
+      } else {
+        ctx.response().setStatusCode(500).end(res.cause().getMessage());
+      }
     });
+    
   }
   
   @GET
   @Path("/:id")
-  public void get(RoutingContext ctx) {
+  public void getById(RoutingContext ctx) {
     String _id = ctx.request().getParam("id");
-    JsonObject query = new JsonObject().put("_id", _id);
+    JsonObject query = new JsonObject().put("_id", new JsonObject().put("$oid", _id));
     
-    mongo.findOne("social.cut.cms", query, null, res -> {
-      ctx.response().end("get...");
+    mongo.findOne(COLLECTION, query, null, res -> {
+      if(res.succeeded()) {
+        Document document = Json.mapper.convertValue(res.result(), Document.class);
+        ctx.response().end(Json.encodePrettily(document));
+      } else {
+        ctx.response().setStatusCode(404).end(res.cause().getMessage());
+      }
     });
   }
   
   @PUT
   @Path("/:id")
   public void update(RoutingContext ctx) {
-    Document document = new Document();//TODO read from ctx.request()
-    document.setTitle("Testing...");
-    logger.info("Document: " + document.title);
-    ctx.response().end("update...");
+    String _id = ctx.request().getParam("id");
+    Document document = Json.decodeValue(ctx.getBodyAsString(), Document.class);
+    if (document.get_id()==null) {
+      ctx.response().setStatusCode(404).end();
+    }
+
+    JsonObject query = new JsonObject().put("_id", _id);
+
+    JsonObject json = new JsonObject(Json.encode(document));
+    json.remove("_id");
+
+    mongo.replaceDocuments(COLLECTION, query, json, res -> {
+      if (res.succeeded()) {
+        ctx.response().setStatusCode(200).end(res.result().toJson().encode());
+      } else {
+        ctx.response().setStatusCode(500).end(res.cause().getMessage());
+      }
+    });
+    
   }
   
   @POST
@@ -77,15 +116,35 @@ public class CMSController extends Controller {
     Document document = Json.decodeValue(ctx.getBodyAsString(), Document.class);
     JsonObject json = new JsonObject(Json.encode(document));
     json.remove("_id");
-    mongo.save("social.cut.cms", json, res -> {
+    
+    mongo.save(COLLECTION, json, res -> {
       if (res.succeeded()) {
-        logger.info("Result: " + res.result());
+        ctx.response().setStatusCode(200).end(res.result());
       } else {
         logger.error("Error: " + res.cause());
+        ctx.response().setStatusCode(500).end(res.cause().getMessage());
       };
     });
-    logger.info("Document: " + document.title);
-    ctx.response().end("create...");
+  }
+  
+  @DELETE
+  @Path("/:id")
+  public void remove(RoutingContext ctx) {
+    String _id = ctx.request().getParam("id");
+    JsonObject query = new JsonObject().put("_id", new JsonObject().put("$oid", _id));
+
+    mongo.removeDocument(COLLECTION, query, res -> {
+      if(res.succeeded()) {
+        ctx.response()
+          .end(new JsonObject()
+            .put("result", res.result().getRemovedCount())
+            .put("status", 200)
+            .encodePrettily());
+      } else {
+        res.cause().printStackTrace();
+        ctx.response().setStatusCode(500).end(res.cause().getMessage());
+      }
+    });
   }
 
 }
