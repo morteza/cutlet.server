@@ -21,16 +21,13 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
-import io.vertx.core.Future;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.mongo.MongoClient;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import social.cut.common.Controller;
 
@@ -38,23 +35,12 @@ import social.cut.common.Controller;
 public class CMSController extends Controller {
 
   //TODO Move this to service
-  protected MongoClient mongo;
-  private final String COLLECTION = "social.cut.cms";
-  
   @Inject
-  private Router router;
+  private MongoClient mongo;
   
-  private final Logger LOG = LoggerFactory.getLogger(CMSController.class);
+  private final String COLLECTION = "social.cut.cms";
 
-  @Override
-  public void start(Future<Void> future) {
-    super.start(future);
-    
-    JsonObject dbConfig = config().getJsonObject("mongo");
-    mongo = MongoClient.createShared(vertx, dbConfig);
-    //future.complete();
-    LOG.info("MongoDB client initiated");
-  }
+  private final Logger LOG = LoggerFactory.getLogger(CMSController.class);
   
   @GET
   @Path("/")
@@ -128,7 +114,7 @@ public class CMSController extends Controller {
       if (res.succeeded()) {
         ctx.response().setStatusCode(200).end(res.result());
       } else {
-        logger.error("Error: " + res.cause());
+        LOG.error("Error: " + res.cause());
         ctx.response().setStatusCode(500).end(res.cause().getMessage());
       };
     });

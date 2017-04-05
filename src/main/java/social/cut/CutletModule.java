@@ -19,17 +19,20 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 
 public class CutletModule extends AbstractModule {
 
   private final Vertx vertx;
   private final Router router;
+  private final MongoClient mongo;
   private final Context context;
 
-  public CutletModule(Vertx vertx, Router router) {
+  public CutletModule(Vertx vertx, Router router, MongoClient mongo) {
       this.vertx = vertx;
       this.router = router;
+      this.mongo = mongo;
       this.context = vertx.getOrCreateContext();
   }
 
@@ -37,6 +40,7 @@ public class CutletModule extends AbstractModule {
   protected void configure() {
     bind(EventBus.class).toInstance(vertx.eventBus());
     bind(Router.class).toInstance(router);
+    bind(MongoClient.class).toInstance(mongo);
     Properties props = toProperties(context.config().getJsonObject("inject"));
     Names.bindProperties(binder(), props);
   }

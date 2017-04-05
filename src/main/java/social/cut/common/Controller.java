@@ -16,8 +16,6 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,29 +23,27 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
+import com.google.inject.Inject;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import social.cut.utils.ShareableRouter;
 
-public class Controller extends AbstractVerticle {
-  protected ShareableRouter sharedRouter = null;
+public class Controller extends AbstractVerticle {  
   
-  public final Logger logger = LoggerFactory.getLogger(Controller.class);
+  @Inject
+  protected Router router;
+
+  public final Logger LOG = LoggerFactory.getLogger(Controller.class);
   
   @Override
   public void start(Future<Void> startFuture) {
-    //FIXME this is just  a workaround to store all routes in a single router.
-    LocalMap<String, ShareableRouter> routers = vertx.sharedData().getLocalMap("routers");
-    ShareableRouter sharedRouter = routers.get("main");
-    addRoutes(sharedRouter.getRouter());
-    routers.put("main", sharedRouter);
+    addRoutes(router);
   }
   
   private void addRoutes(Router router) {
@@ -58,7 +54,6 @@ public class Controller extends AbstractVerticle {
       Method[] methods = clazz.getMethods();
 
       String classPath = ((Path)clazz.getAnnotation(Path.class)).value();
-      logger.info("ClazzPath: " + classPath);
 
       for (Method method : methods) {
         Annotation[] annotations = method.getAnnotations();
