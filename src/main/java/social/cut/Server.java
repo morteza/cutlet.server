@@ -1,5 +1,8 @@
 package social.cut;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.http.HttpMethod;
@@ -19,6 +22,7 @@ public class Server extends AbstractVerticle {
 
   private final Logger logger = LoggerFactory.getLogger(Server.class);
   private Router router;
+  private Injector injector;
 
   @Override
   public void start() {
@@ -26,7 +30,7 @@ public class Server extends AbstractVerticle {
     // Load configs from file
     JsonObject confs = DeploymentOptionsUtils.readConfigJsonResource();
     DeploymentOptions options = new DeploymentOptions().setConfig(confs);
-    
+        
     router = Router.router(vertx);
 
     addCorsHandler(router);
@@ -37,8 +41,10 @@ public class Server extends AbstractVerticle {
     LocalMap<String, ShareableRouter> routers = vertx.sharedData().getLocalMap("routers");
     routers.put("main", sr);
     
-    vertx.deployVerticle(CMSController.class.getName(), options);
-    vertx.deployVerticle(InboxController.class.getName(), options);
+    injector = Guice.createInjector(new CutletModule(vertx, router));
+
+    vertx.deployVerticle(injector.getInstance(CMSController.class), options);
+    vertx.deployVerticle(injector.getInstance(InboxController.class), options);
 
     //TODO read port from config file.
     vertx.createHttpServer().requestHandler(sr.getRouter()::accept)

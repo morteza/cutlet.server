@@ -16,6 +16,7 @@ sourceCompatibility = '1.8'
 mainClassName = 'io.vertx.core.Launcher'
 
 def vertxVersion = '3.4.1'
+def guiceVersion = '4.1.0'
 def resteasyVersion = '3.1.1.Final'
 def junitVersion = '4.12'
 def mainVerticleName = 'social.cut.Server'
@@ -24,6 +25,7 @@ def configFile = 'src/main/resources/config.dev.json'
 def doOnChange = 'gradle classes'
 
 dependencies {
+  compile "com.google.inject:guice:$guiceVersion"
   compile "io.vertx:vertx-core:$vertxVersion"
   compile "io.vertx:vertx-codegen:$vertxVersion"
   compile "io.vertx:vertx-web:$vertxVersion"
