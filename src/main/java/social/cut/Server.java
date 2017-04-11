@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.http.HttpMethod;
@@ -30,7 +31,6 @@ public class Server extends AbstractVerticle {
 
   private final Logger LOG = LoggerFactory.getLogger(Server.class);
 
-  private MongoClient mongo;
   @Override
   public void start() {
 
@@ -40,15 +40,15 @@ public class Server extends AbstractVerticle {
         
     Router router = Router.router(vertx);
 
-    mongo = initMongo(confs.getJsonObject("mongo"));
+    MongoClient mongo = initMongo(confs.getJsonObject("mongo"));
+    MongoDataStore dataStore = new MongoDataStore(vertx, mongo, confs.getJsonObject("mongo"));
     
     addCorsHandler(router);
     addStaticHandler(router);
 
-    Injector injector = Guice.createInjector(new CutletModule(vertx, router, mongo));
+    Injector injector = Guice.createInjector(new CutletModule(vertx, router, mongo, dataStore));
 
     injector.getInstance(AuthUtils.class).addAuthHandler();
-
     vertx.deployVerticle(injector.getInstance(CMSController.class), options);
     vertx.deployVerticle(injector.getInstance(InboxController.class), options);
 
@@ -80,5 +80,5 @@ public class Server extends AbstractVerticle {
     router.route("/assets/*").handler(StaticHandler.create());
     return router;
   }
-
+  
 }

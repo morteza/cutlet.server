@@ -8,7 +8,7 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral()
-  jcenter()
+  //jcenter()
 }
 
 version = '2.0-SNAPSHOT'
@@ -17,6 +17,7 @@ mainClassName = 'io.vertx.core.Launcher'
 
 def vertxVersion = '3.4.1'
 def guiceVersion = '4.1.0'
+def pojongoVersion = '1.3.1'
 def resteasyVersion = '3.1.1.Final'
 def junitVersion = '4.12'
 def mainVerticleName = 'social.cut.Server'
@@ -34,8 +35,10 @@ dependencies {
   compile "io.vertx:vertx-auth-jwt:$vertxVersion"
   compile "org.jboss.resteasy:resteasy-vertx:$resteasyVersion"
   compile "org.jboss.resteasy:resteasy-jackson-provider:$resteasyVersion"
+  compile "de.braintags:vertx-pojongo:$pojongoVersion"
+  
   testCompile "junit:junit:$junitVersion"
-  testCompile "io.vertx:vertx-unit:$vertxVersion"
+  testCompile "io.vertx:vertx-unit:$vertxVersion"  
 }
 
 shadowJar {

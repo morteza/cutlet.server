@@ -11,38 +11,34 @@
 package social.cut.common;
 
 import java.util.Date;
-import java.util.Map;
 
-import org.bson.types.ObjectId;
-
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSetter;
+
+import de.braintags.io.vertx.pojomapper.annotation.field.Id;
+import de.braintags.io.vertx.pojomapper.annotation.lifecycle.BeforeSave;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Model {
 
-  protected ObjectId _id;
+  @Id
+  protected String id;
   
   public Date createdAt;
   public Date modifiedAt;
 
-  @JsonGetter("_id")
-  public String get_id() {
-    return (_id==null)?null:_id.toHexString();
+  public String getId() {
+    return id;
   }
   
-  //FIXME use more robust methods!
-  @JsonSetter("_id")
-  public void set_id(Object _id) {
-    String oid = null;
-    if (_id==null)
-      return;
-    if (_id instanceof Map<?,?>) {
-      oid = ((Map<String, String>)_id).get("$oid");
-    } else if (_id instanceof String) {
-      oid = (String)_id;
+  public void setId(String id) {
+    this.id = id;
+  }
+  
+  @BeforeSave
+  public void updateTimestamps() {
+    if (id==null) {
+      this.createdAt = new Date();
     }
-    this._id = new ObjectId(oid);
+    this.modifiedAt = new Date();
   }
 }

@@ -15,6 +15,7 @@ import java.util.Properties;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 
+import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -27,12 +28,14 @@ public class CutletModule extends AbstractModule {
   private final Vertx vertx;
   private final Router router;
   private final MongoClient mongo;
+  private final MongoDataStore dataStore;
   private final Context context;
 
-  public CutletModule(Vertx vertx, Router router, MongoClient mongo) {
+  public CutletModule(Vertx vertx, Router router, MongoClient mongo, MongoDataStore dataStore) {
       this.vertx = vertx;
       this.router = router;
       this.mongo = mongo;
+      this.dataStore = dataStore;
       this.context = vertx.getOrCreateContext();
   }
 
@@ -43,6 +46,7 @@ public class CutletModule extends AbstractModule {
     bind(EventBus.class).toInstance(vertx.eventBus());
     bind(Router.class).toInstance(router);
     bind(MongoClient.class).toInstance(mongo);
+    bind(MongoDataStore.class).toInstance(dataStore);
     Properties props = toProperties(context.config().getJsonObject("inject"));
     Names.bindProperties(binder(), props);
   }

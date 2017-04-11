@@ -1,6 +1,6 @@
 /*******************************************************************************
  *        File: Document.java
- *    Revision: 1
+ *    Revision: 2
  * Description: TODO
  *      Author: Morteza Ansarinia <ansarinia@me.com>
  *  Created on: Mar 29, 2017
@@ -14,12 +14,17 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.braintags.io.vertx.pojomapper.annotation.Entity;
 import social.cut.common.Model;
 
+@Entity(name="cms.document")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Document extends Model {
-  public String path;
-  String title;
+  private String path;
+  private String title;
+  private String content;
+  private String template;
+  private Date createdAt;
   /**
    * @return the path
    */
@@ -80,7 +85,5 @@ public class Document extends Model {
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
   }
-  String content;
-  String template;
-  Date createdAt;
+
 }
