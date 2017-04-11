@@ -38,6 +38,8 @@ public class CutletModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    //FIXME remove vertx from binding
+    bind(Vertx.class).toInstance(vertx);
     bind(EventBus.class).toInstance(vertx.eventBus());
     bind(Router.class).toInstance(router);
     bind(MongoClient.class).toInstance(mongo);
