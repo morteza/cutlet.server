@@ -11,10 +11,6 @@
 package social.cut.common;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.LambdaConversionException;
-import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 
 import javax.ws.rs.DELETE;
@@ -93,14 +89,15 @@ public class Controller extends AbstractVerticle {
 
   }
   
-  private Handler<RoutingContext> createRoutingHandler(Method method) throws IllegalAccessException, LambdaConversionException, Throwable {
-    MethodHandles.Lookup lookup = MethodHandles.lookup();
-
-    return (Handler<RoutingContext>) LambdaMetafactory
-    .metafactory(lookup, "handle", MethodType.methodType(Handler.class, getClass()),
-        MethodType.methodType(void.class, Object.class), lookup.unreflect(method),
-        MethodType.methodType(void.class, RoutingContext.class))
-    .getTarget().invoke(this);
+  private Handler<RoutingContext> createRoutingHandler(Method method) {
+    return ctx -> {
+      try {
+        method.invoke(this, ctx);
+      } catch (Throwable e) {
+        ctx.fail(e);
+      }
+    };
   }
+
   
 }

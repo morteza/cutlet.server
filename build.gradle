@@ -53,7 +53,7 @@ shadowJar {
 
 run {
   args = ['run', mainVerticleName,
-    "--redeploy=$watchForChange",
+    "--redeploy=src/**/*.java",
     "--launcher-class=$mainClassName",
     "--on-redeploy=$doOnChange",
     "--conf=$configFile"]
