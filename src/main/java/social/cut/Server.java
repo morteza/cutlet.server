@@ -15,7 +15,11 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CookieHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import social.cut.auth.AccountController;
 import social.cut.auth.AuthUtils;
@@ -35,6 +39,9 @@ public class Server extends AbstractVerticle {
     DeploymentOptions options = new DeploymentOptions().setConfig(confs);
         
     Router router = Router.router(vertx);
+    
+    router.route("/api/*").handler(BodyHandler.create());
+    router.route("/api/*").handler(CookieHandler.create());
 
     MongoClient mongo = initMongo(confs.getJsonObject("mongo"));
     MongoDataStore dataStore = new MongoDataStore(vertx, mongo, confs.getJsonObject("mongo"));

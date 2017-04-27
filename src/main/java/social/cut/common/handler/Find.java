@@ -16,14 +16,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.inject.Inject;
-
 import de.braintags.io.vertx.pojomapper.dataaccess.query.IQuery;
 import de.braintags.io.vertx.pojomapper.dataaccess.query.IQueryResult;
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -36,11 +35,15 @@ public class Find<T extends Model> implements Handler<RoutingContext> {
 
   private Class<T> cls;
   
-  @Inject
   private MongoDataStore store;
   
   public Find(Class<T> cls) {
     this.cls = cls;
+  }
+  
+  public Find<T> setStore(MongoDataStore store) {
+    this.store = store;
+    return this;
   }
   
   @Override
@@ -79,36 +82,34 @@ public class Find<T extends Model> implements Handler<RoutingContext> {
       q.field(key).is(param.getValue());
     }
 
+    q.setReturnCompleteCount(true);
+    
     q.execute(res -> {
       if (res.succeeded()) {
         IQueryResult<T> qr = res.result();
         qr.toArray(ar -> {
           if (ar.succeeded()) {
-            count(query, cnt -> {
-              if (cnt.succeeded()) {
-                JsonObject json = new JsonObject();
-                
-                // Put data, count, and total number of items
-                json.put("data", res.result());
-                json.put("count", res.result().size());
-                json.put("total", cnt.result());
-                
-                // Calc and update page value
-                Long limit = Long.valueOf(sort.getInteger("limit", 25));
-                Long page = Long.valueOf(sort.getInteger("page", 0));
-                if (page<0)
-                  page = 0l;
-                if (page>(cnt.result()/limit)+1)
-                  page = 1 + (cnt.result()/limit);
-                json.put("page", page+1);
-                
-                // Finished!
-                resultHandler.handle(Future.succeededFuture(json));
-              } else {
-                // failed to count()
-                resultHandler.handle(Future.failedFuture(cnt.cause()));
-              }
-            });
+            long total = res.result().getCompleteResult();
+            JsonObject json = new JsonObject();
+            
+            // Put data, count, and total number of items
+            
+            json.put("data", new JsonArray(Arrays.asList(ar.result())));
+            json.put("count", ar.result().length);
+            json.put("total", total);
+            
+            // Calc and update page value
+            Long limit = Long.valueOf(sort.getInteger("limit", 25));
+            Long page = Long.valueOf(sort.getInteger("page", 0));
+            if (page<0)
+              page = 0l;
+            if (page>(total/limit)+1)
+              page = 1 + (total/limit);
+            json.put("page", page+1);
+            
+            // Finished!
+            resultHandler.handle(Future.succeededFuture(json));
+
           } else {
             // Failed to retrieve array of results.
             resultHandler.handle(Future.failedFuture(ar.cause()));

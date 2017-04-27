@@ -12,8 +12,6 @@ package social.cut.common.handler;
 
 import org.apache.http.HttpStatus;
 
-import com.google.inject.Inject;
-
 import de.braintags.io.vertx.pojomapper.dataaccess.delete.IDelete;
 import de.braintags.io.vertx.pojomapper.dataaccess.query.IQuery;
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
@@ -30,11 +28,15 @@ public class Delete<T extends Model> implements Handler<RoutingContext> {
   
   public final Logger LOG = LoggerFactory.getLogger(Delete.class);
   
-  @Inject
   private MongoDataStore store;
   
   public Delete(Class<T> cls) {
     this.cls = cls;
+  }
+  
+  public Delete<T> setStore(MongoDataStore store) {
+    this.store = store;
+    return this;
   }
   
   @Override
@@ -55,7 +57,7 @@ public class Delete<T extends Model> implements Handler<RoutingContext> {
         ctx.response().end(json.encode());
       } else {
         LOG.error(res.cause());
-        ctx.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        ctx.fail(res.cause());
       }
     }); 
   }

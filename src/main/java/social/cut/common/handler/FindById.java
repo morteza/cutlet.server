@@ -10,8 +10,6 @@
 
 package social.cut.common.handler;
 
-import com.google.inject.Inject;
-
 import de.braintags.io.vertx.pojomapper.dataaccess.query.IQuery;
 import de.braintags.io.vertx.pojomapper.dataaccess.query.IQueryResult;
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
@@ -24,12 +22,17 @@ public class FindById<T extends Model> implements Handler<RoutingContext> {
 
   private Class<T> cls;
   
-  @Inject
   private MongoDataStore store;
   
   public FindById(Class<T> cls) {
     this.cls = cls;
   }
+  
+  public FindById<T> setStore(MongoDataStore store) {
+    this.store = store;
+    return this;
+  }
+  
   @Override
   public void handle(RoutingContext ctx) {
     String id = ctx.request().getParam("id");
