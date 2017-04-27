@@ -39,7 +39,7 @@ public class Model {
   
   @BeforeSave
   public void updateTimestamps() {
-    if (id==null) {
+    if (createdAt==null) {
       this.createdAt = new Date();
     }
     this.modifiedAt = new Date();

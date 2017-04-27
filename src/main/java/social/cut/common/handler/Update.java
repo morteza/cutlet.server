@@ -10,8 +10,6 @@
 
 package social.cut.common.handler;
 
-import org.apache.http.HttpStatus;
-
 import com.google.inject.Inject;
 
 import de.braintags.io.vertx.pojomapper.annotation.Entity;
@@ -29,26 +27,31 @@ public class Update<T extends Model> implements Handler<RoutingContext> {
   public final Logger LOG = LoggerFactory.getLogger(Update.class);
 
   private Class<T> cls;
-  
+
   @Inject
   private MongoClient mongo;
-  
+
   public Update(Class<T> cls) {
     this.cls = cls;
   }
   
+  public Update<T> setMongoClient(MongoClient client) {
+    this.mongo = client;
+    return this;
+  }
+
   @Override
   public void handle(RoutingContext ctx) {
-    String id = ctx.request().getParam("id");
+    String id = ctx.pathParam("id");
+    JsonObject payload = ctx.getBodyAsJson();
 
-    //TODO JsonObject query = new JsonObject().put("_id", new JsonObject().put("$oid", id));
     JsonObject query = new JsonObject().put("_id", id);
 
-    JsonObject update = ctx.getBodyAsJson();
+    JsonObject update = new JsonObject().put("$set", payload);
 
     UpdateOptions options = new UpdateOptions().setMulti(false).setUpsert(false);
 
-    String collection = this.getClass().getAnnotation(Entity.class).name();
+    String collection = cls.getAnnotation(Entity.class).name();
     mongo.updateCollectionWithOptions(
         collection,
         query,
@@ -56,10 +59,16 @@ public class Update<T extends Model> implements Handler<RoutingContext> {
         options,
         res -> {
           if(res.succeeded()) {
-            ctx.response().end(res.result().toJson().encode());
+            JsonObject json = new JsonObject().put("result", "success");
+            json.put("matched", res.result().getDocMatched());
+            json.put("modified", res.result().getDocModified());
+            json.put("upsertedId", res.result().getDocUpsertedId());
+
+            ctx.response().end(json.encode());
+
           } else {
             LOG.error(res.cause());
-            ctx.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            ctx.fail(res.cause());
           }
         });
   }

@@ -10,11 +10,11 @@
 
 package social.cut.cms;
 
-import com.google.inject.Guice;
 import com.google.inject.Inject;
 
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import social.cut.cms.handler.UploadAttachment;
 import social.cut.common.handler.Create;
@@ -31,6 +31,9 @@ public class CMSController extends AbstractVerticle {
   @Inject
   private MongoDataStore store;
   
+  @Inject
+  private MongoClient mongo;
+  
   @Override
   public void start() {
     Router api = Router.router(vertx);
@@ -39,7 +42,7 @@ public class CMSController extends AbstractVerticle {
     api.get("/").handler(new Find<Document>(Document.class).setStore(store));
     api.get("/:id").handler(new FindById<Document>(Document.class).setStore(store));
     api.post("/").handler(new Create<Document>(Document.class).setStore(store));
-    api.put("/:id").handler(new Update<Document>(Document.class));
+    api.put("/:id").handler(new Update<Document>(Document.class).setMongoClient(mongo));
     api.delete("/:id").handler(new Delete<Document>(Document.class).setStore(store));
     
     api.put("/attachment/:id").handler(new UploadAttachment());
