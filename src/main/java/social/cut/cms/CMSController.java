@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.ext.web.Router;
+import social.cut.cms.handler.UploadAttachment;
 import social.cut.common.handler.Create;
 import social.cut.common.handler.Find;
 import social.cut.common.handler.FindById;
@@ -29,11 +30,14 @@ public class CMSController extends AbstractVerticle {
   public void start() {
     Router api = Router.router(vertx);
     
+    // CRUD
     api.get("/").handler(new Find<Document>(Document.class));
     api.get("/:id").handler(new FindById<Document>(Document.class));
     api.post("/").handler(new Create<Document>(Document.class));
     api.put("/:id").handler(new Update<Document>(Document.class));
     api.delete("/:id").handler(new Delete<Document>(Document.class));
+    
+    api.put("/attachment/:id").handler(new UploadAttachment());
     
     router.mountSubRouter("/api/v1/cms", api);
   }
