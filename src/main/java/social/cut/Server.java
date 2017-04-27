@@ -16,12 +16,8 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.auth.User;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTOptions;
-import io.vertx.ext.auth.mongo.MongoAuth;
+import social.cut.auth.AccountController;
 import social.cut.auth.AuthUtils;
 import social.cut.cms.CMSController;
 import social.cut.inbox.InboxController;
@@ -49,8 +45,9 @@ public class Server extends AbstractVerticle {
     Injector injector = Guice.createInjector(new CutletModule(vertx, router, mongo, dataStore));
 
     injector.getInstance(AuthUtils.class).addAuthHandler();
-    vertx.deployVerticle(injector.getInstance(CMSController.class), options);
     vertx.deployVerticle(injector.getInstance(InboxController.class), options);
+    vertx.deployVerticle(injector.getInstance(CMSController.class), options);
+    vertx.deployVerticle(injector.getInstance(AccountController.class), options);
 
     //TODO read port from config file.
     vertx.createHttpServer().requestHandler(router::accept)

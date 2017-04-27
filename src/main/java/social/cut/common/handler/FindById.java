@@ -13,14 +13,16 @@ package social.cut.common.handler;
 import com.google.inject.Inject;
 
 import de.braintags.io.vertx.pojomapper.dataaccess.query.IQuery;
+import de.braintags.io.vertx.pojomapper.dataaccess.query.IQueryResult;
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import social.cut.common.Model;
 
-public class FindById<T> implements Handler<RoutingContext> {
+public class FindById<T extends Model> implements Handler<RoutingContext> {
 
   private Class<T> cls;
   
@@ -32,7 +34,30 @@ public class FindById<T> implements Handler<RoutingContext> {
   }
   @Override
   public void handle(RoutingContext ctx) {
-    
+    String id = ctx.request().getParam("id");
+
+    IQuery<T> query = store.createQuery(cls);
+
+    query.field(query.getMapper().getIdField().getName()).is(id);
+
+    query.execute(res -> {
+      if (res.succeeded()) {
+        IQueryResult<T> qr = res.result();
+        if (qr.isEmpty()) {
+          JsonObject json = new JsonObject();
+          json.put("result","empty");
+          ctx.response().end(json.encode());
+          return;
+        }
+        qr.iterator().next(obj -> {
+          JsonObject json = JsonObject.mapFrom(obj.result());
+          ctx.response().end(json.encode());
+        });
+
+      } else {
+        ctx.response().setStatusCode(500).end(res.cause().getMessage());
+      }
+    });
   }
   
   public void handle(String id, Handler<AsyncResult<T>> resultHandler) {

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *        File: Controller.java
  *    Revision: 1
- * Description: TODO
+ * Description: TODO Remove this class. We are using handlers now.
  *      Author: Morteza Ansarinia <ansarinia@me.com>
  *  Created on: Mar 30, 2017
  *     Project: social.cut.server
