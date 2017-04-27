@@ -15,9 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import org.apache.http.HttpStatus;
 
 import com.google.inject.Inject;
 
@@ -27,7 +24,6 @@ import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -49,15 +45,12 @@ public class Find<T extends Model> implements Handler<RoutingContext> {
   
   @Override
   public void handle(RoutingContext ctx) {
-    ctx.fail(HttpStatus.SC_NOT_IMPLEMENTED);
     JsonObject query = getQueryParams(ctx);
     JsonObject sort = getSortParams(ctx);
     
     handle(query, sort, res-> {
       if (res.succeeded()) {
-        JsonObject resp = new JsonObject();
-        resp.put("data", new JsonArray(res.result()));
-        ctx.response().end(resp.encode());
+        ctx.response().end(res.result().encode());
       } else {
         LOG.error(res.cause());
         ctx.fail(res.cause());
@@ -66,7 +59,7 @@ public class Find<T extends Model> implements Handler<RoutingContext> {
     
   }
   
-  public void handle(JsonObject query, JsonObject sort, Handler<AsyncResult<List<T>>> resultHandler) {
+  public void handle(JsonObject query, JsonObject sort, Handler<AsyncResult<JsonObject>> resultHandler) {
     
     IQuery<T> q = store.createQuery(cls);
     
@@ -91,9 +84,31 @@ public class Find<T extends Model> implements Handler<RoutingContext> {
         IQueryResult<T> qr = res.result();
         qr.toArray(ar -> {
           if (ar.succeeded()) {
-            // Convert T[] to List<T>
-            List<T> objs = Arrays.stream(ar.result()).map(e -> (T)e).collect(Collectors.toList());
-            resultHandler.handle(Future.succeededFuture(objs));
+            count(query, cnt -> {
+              if (cnt.succeeded()) {
+                JsonObject json = new JsonObject();
+                
+                // Put data, count, and total number of items
+                json.put("data", res.result());
+                json.put("count", res.result().size());
+                json.put("total", cnt.result());
+                
+                // Calc and update page value
+                Long limit = Long.valueOf(sort.getInteger("limit", 25));
+                Long page = Long.valueOf(sort.getInteger("page", 0));
+                if (page<0)
+                  page = 0l;
+                if (page>(cnt.result()/limit)+1)
+                  page = 1 + (cnt.result()/limit);
+                json.put("page", page+1);
+                
+                // Finished!
+                resultHandler.handle(Future.succeededFuture(json));
+              } else {
+                // failed to count()
+                resultHandler.handle(Future.failedFuture(cnt.cause()));
+              }
+            });
           } else {
             // Failed to retrieve array of results.
             resultHandler.handle(Future.failedFuture(ar.cause()));
@@ -103,6 +118,31 @@ public class Find<T extends Model> implements Handler<RoutingContext> {
       } else {
         // Failed to query
         resultHandler.handle(Future.failedFuture(res.cause()));
+      }
+    });
+  }
+  
+  public void count(JsonObject query, Handler<AsyncResult<Long>> resultHandler) {
+    
+    IQuery<T> total = store.createQuery(cls);
+
+    // Default general query (id is not null)
+    total.field(total.getMapper().getIdField().getName()).isNot(null);
+
+    Iterator<Map.Entry<String, Object>> it = query.iterator();
+    while(it.hasNext()) {
+      Entry<String, Object> param = it.next();
+      String key = param.getKey();
+      total.field(key).is(param.getValue());
+    }
+
+    // Count TOTAL without pagination and stuff
+    total.executeCount(cnt -> {
+      if (cnt.succeeded()) {
+        long tot = cnt.result().getCount();
+        resultHandler.handle(Future.succeededFuture(tot));
+      } else {
+        resultHandler.handle(Future.failedFuture(cnt.cause()));
       }
     });
   }
