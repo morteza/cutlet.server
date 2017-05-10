@@ -10,6 +10,8 @@
 
 package social.cut.cms;
 
+import javax.ws.rs.Path;
+
 import com.google.inject.Inject;
 
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore;
@@ -23,6 +25,7 @@ import social.cut.common.handler.FindById;
 import social.cut.common.handler.Delete;
 import social.cut.common.handler.Update;
 
+@Path("/api/v1/cms")
 public class CMSController extends AbstractVerticle {
 
   @Inject
@@ -47,7 +50,8 @@ public class CMSController extends AbstractVerticle {
     
     api.put("/attachment/:id").handler(new UploadAttachment());
     
-    router.mountSubRouter("/api/v1/cms", api);
+    String path = this.getClass().getAnnotation(Path.class).value();
+    router.mountSubRouter(path, api);
   }
 
 }

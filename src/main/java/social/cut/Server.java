@@ -81,7 +81,7 @@ public class Server extends AbstractVerticle {
   }
 
   private Router addStaticHandler(Router router) {
-    router.route("/assets/*").handler(StaticHandler.create());
+    router.route("/*").handler(StaticHandler.create());
     return router;
   }
   
