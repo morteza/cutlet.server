@@ -1,0 +1,65 @@
+{
+  "elements": [
+    {
+      "id":17,
+      "type": "bart"
+    },
+    {
+      "id":16,
+      "type":"choice",
+      "content":"This is simple choice question with `none` enabled.",
+      "allowNone":true,
+      "radio":true,
+      "choices":[
+        {
+          "value":"Male",
+          "title":"Male"
+        },
+        {
+          "value":"Female",
+          "title":"Female"
+        },
+        {
+          "value":"Other",
+          "title":"Other"
+        }
+      ]
+    },
+    {
+      "id":15,
+      "type":"statement",
+      "content":"This is simple survey"
+    },
+    {
+      "id":1,
+      "title": "Q1 title",
+      "type": "text",
+      "content": "Q1 content"
+    },
+    {
+      "id":2,
+      "title": "Q2 title (likert)",
+      "type": "likert",
+      "content": "Q2 content",
+      "options": [
+        "low","medium","high"
+      ],
+      "min":1,
+      "max":7,
+      "step":1
+    },
+    {
+      "id":3,
+      "title": "Q3",
+      "type": "longtext",
+      "maxlength": 250,
+      "content": "This is a long text question!"
+    },
+    {
+      "id":4,
+      "title": "Q4 title",
+      "type": "text",
+      "content": "Q4 content"
+    }
+  ]
+}
